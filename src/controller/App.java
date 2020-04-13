@@ -1,23 +1,27 @@
 package controller;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import dao.DAO;
 import model.Product;
+import model.ProductComparator;
 import view.MainView;
 import view.ProductView;
 
 public class App {
 	
-	private static final int EDIT_BY_ID_CODE = 3;
-	private static final int SORTING_BY_PRICE_CODE = 7;
 	private static final int SAVE_DATA_CODE = 9;
 	private static final int LOAD_DATA_CODE = 8;
+	private static final int SORTING_BY_PRICE_CODE = 7;
 	private static final int SEARCH_BY_NAME_CODE = 6;
 	private static final int SEARCH_BY_ID_CODE = 5;
 	private static final int DELETE_BY_ID_CODE = 4;
+	private static final int EDIT_BY_ID_CODE = 3;
 	private static final int ADD_PRODUCT_CODE = 2;
 	private static final int DISPLAY_ALL_CODE = 1;
 	private static final String INVALID_OPTION_STRING = "Invalid Option";
@@ -43,52 +47,7 @@ public class App {
 		//-----------------------
 		return productsList;
 	}
-
-	public static void main(String[] args) throws NumberFormatException, IOException {
-		MainView mainView = new MainView();
-		ArrayList<Product> productsList = initData();
-		int option = INIT_VALUE;
-		int idValue = INIT_VALUE;
-		Iterator<Product> itr = productsList.iterator();
-		while (option != EXIT_CODE) {
-            option = MainView.mainMenu();
-            switch (option) {
-                case EXIT_CODE:
-                    System.exit(EXIT_CODE);
-                    break;
-                case DISPLAY_ALL_CODE:
-                	MainView.displayAllProducts(productsList);
-                    break;
-                case ADD_PRODUCT_CODE:
-                	productsList.add(mainView.createProductForm());
-                    break;
-                case EDIT_BY_ID_CODE:
-                	
-                    break;
-                case DELETE_BY_ID_CODE:
-                	deleteProductById(productsList);
-                     break;                    
-                case SEARCH_BY_ID_CODE:
-                	searchProductByID(productsList);
-                    break;
-                case SEARCH_BY_NAME_CODE:
-                	searchProductByName(productsList);
-                    break;
-                case SORTING_BY_PRICE_CODE:
-                	
-                    break;
-                case LOAD_DATA_CODE:
-                	productsList = DAO.readFromFile(DATA_FILE_PATH);
-                    break;
-                case SAVE_DATA_CODE:
-                	DAO.writeToFile(productsList, DATA_FILE_PATH);
-                    break;
-                default:
-                    System.out.println(INVALID_OPTION_STRING);
-            }
-        }
-	}
-
+	
 	private static void searchProductByName(ArrayList<Product> productsList) throws IOException {
 		Iterator<Product> itr;
 		String nameValue = MainView.enterNameForm();
@@ -111,7 +70,6 @@ public class App {
 		while(itr.hasNext()) {
 			Product holder = itr.next();
 			if(holder.getId()==idValue) {
-				System.out.printf("%-5s%-20s%-20s%-10s%-30s\n","id","name","manufacturer","price","information");
 				ProductView productView = new ProductView();
 				ProductController productController = new ProductController(holder, productView);
 				productController.updateProductView();
@@ -132,6 +90,74 @@ public class App {
 		 	}
 		 }
 	}
+	
+	private static void updateProductById(ArrayList<Product> productsList) throws IOException {
+		int idValue;
+		Iterator<Product> itr;
+		idValue = MainView.enterIDForm();
+		 itr = productsList.iterator();
+		 while(itr.hasNext()) {
+		 	Product holder = itr.next();
+		 	if(holder.getId()==idValue) {
+		 		MainView mainView = new MainView();
+		 		productsList.set(productsList.indexOf(holder),mainView.createProductForm());
+		 		break;
+		 	}
+		 }
+	}
+
+	public static void main(String[] args) throws NumberFormatException, IOException {
+		MainView mainView = new MainView();
+		ArrayList<Product> productsList = initData();
+		int option = INIT_VALUE;
+		
+		while (option != EXIT_CODE) {
+            option = MainView.mainMenu();
+            switch (option) {
+                case EXIT_CODE:
+                    System.exit(EXIT_CODE);
+                    break;
+                case DISPLAY_ALL_CODE:
+                	MainView.displayAllProducts(productsList);
+                    break;
+                case ADD_PRODUCT_CODE:
+                	productsList.add(mainView.createProductForm());
+                    break;
+                case EDIT_BY_ID_CODE:
+                	updateProductById(productsList);
+                    break;
+                case DELETE_BY_ID_CODE:
+                	deleteProductById(productsList);
+                     break;                    
+                case SEARCH_BY_ID_CODE:
+                	searchProductByID(productsList);
+                    break;
+                case SEARCH_BY_NAME_CODE:
+                	searchProductByName(productsList);
+                    break;
+                case SORTING_BY_PRICE_CODE:
+                	Comparator comparator = new ProductComparator();
+                	Object[] array  = productsList.toArray();
+                	Arrays.sort(array,comparator);
+                	ArrayList<Product> productsSortedList = new ArrayList<Product>();
+                	for(Object item : array) {
+                		productsSortedList.add((Product) item);
+                	}
+                	MainView.displayAllProducts(productsSortedList);
+                    break;
+                case LOAD_DATA_CODE:
+                	productsList = DAO.readFromFile(DATA_FILE_PATH);
+                    break;
+                case SAVE_DATA_CODE:
+                	DAO.writeToFile(productsList, DATA_FILE_PATH);
+                    break;
+                default:
+                    System.out.println(INVALID_OPTION_STRING);
+            }
+        }
+	}
+
+	
 
 	
 
